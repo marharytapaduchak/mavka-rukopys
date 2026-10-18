@@ -1,13 +1,31 @@
 # Notebook conventions
 
-Naming: `NN-kebab-case-name.ipynb`, numbered in the order you'd actually read them (`NN` is two digits: `01`, `02`, ...).
+| Notebook | Purpose |
+|---|---|
+| `00_region_detection.ipynb` | Train and evaluate the DocLayout-YOLO detector; save `best.pt`. |
+| `01_prepare_data.ipynb` | Prepare crops, manifests, and a reproducible train/validation split. |
+| `02_qwen_baseline.ipynb` | Evaluate the base Qwen model on validation regions. |
+| `03_train_qwen.ipynb` | Train a multitask QLoRA adapter for classification and transcription. |
+| `04_evaluate_qwen.ipynb` | Evaluate the adapter, compare it with the baseline, and review errors. |
+| `05_experiments.ipynb` | Compare transcription prompts on the same validation data. |
+| `06_detector_integration.ipynb` | Combine detection and transcription, then export a Kaggle submission using a fixed inference policy. |
 
-1. **A notebook is a draft and a narrative, not the source of truth.** Working code that's used more than once belongs in `src/wine_origin/`, and the notebook imports it — the rule of thumb is: if a function is needed twice, it belongs in `src/`, not copy-pasted between notebooks.
-2. **Every notebook opens with a markdown cell**: Goal, Input, Conclusion. The Conclusion is written **after** the analysis, once you know what the results actually say — not drafted in advance and left unchanged.
-3. **`Restart & Run All` before committing.** A notebook that doesn't run cleanly top to bottom doesn't get committed — a notebook full of out-of-order cell numbers is a common source of "works on my machine, mysteriously not on yours."
-4. **Outputs are committed.** This course's convention is to keep cell outputs in the `.ipynb` file (not strip them), so plots and tables are visible directly on GitHub without anyone having to re-run the notebook first. The tradeoff is merge conflicts (see rule 5) and file size — keep figures reasonably sized, don't `df.head(10000)` into a cell.
-   - `.pre-commit-config.yaml` ships an `nbstripout` hook that would strip outputs on commit — it's **disabled by default** to match this convention. If your team decides the conflict pain outweighs the benefit, there are instructions in that file for turning it on.
-5. **Notebooks and git merges don't mix well.** The underlying JSON makes conflicts nearly unreadable, and git can't meaningfully merge two people's changes to the same notebook. Practical rule: one notebook, one author, at a time. If two people need to work on the same analysis, split it into two notebooks or hand it off explicitly rather than editing in parallel.
-6. **Colab compatibility.** Each notebook carries an "Open in Colab" badge and a guarded first code cell (`if "google.colab" in sys.modules: ...`) that clones the repo and installs dependencies — safe to leave in when running locally, since the block is a no-op outside Colab.
+1. **Keep reusable logic in `src/rukopys/`.** Notebooks document experiments and import shared functions from the package. `src/core.py` remains a compatibility wrapper for older imports.
 
-The four notebooks in this folder (`01-data-exploration`, `02-baseline-model`, `03-model-comparison`, `04-error-analysis`) are fully executed, in that order, and are meant to be read as the actual analysis behind `results/experiments.md` — not sample content to delete.
+2. **Start with the goal and inputs.** Write conclusions after inspecting the results. Use English and a consistent team voice without starting every sentence with “we”.
+
+3. **Place imports and configuration near the beginning.** Discover project paths relative to the working directory. Install dependencies separately from normal execution.
+
+4. **Preserve saved artifacts.** Data, checkpoints, evaluations, and predictions are stored under `src/work/`. Reuse compatible completed results and resume interrupted work where supported. Keep the original directory location because saved artifacts may contain absolute paths.
+
+5. **Separate different experiments.** Changes to models, training settings, prompts, or inference policies require a distinct run name or output directory. Do not overwrite previous results or bypass compatibility checks.
+
+6. **Run `Restart & Run All` before committing.** Compatible cached results may be reused; verification does not require repeating completed GPU computations.
+
+7. **Commit useful notebook outputs.** Retain concise metrics, tables, and representative figures. Store large datasets, predictions, and model weights separately. Check that repository hooks preserve the intended outputs.
+
+8. **Coordinate notebook editing.** Assign one editor per notebook at a time to avoid difficult JSON merge conflicts.
+
+9. **Separate training, validation, and test roles.** Train on the training partition and select configurations using validation. Notebook 06 fixes its policy before processing test images, without test annotations or manual test-specific repairs. Disclose earlier test inspection when reporting results.
+
+10. **Describe results accurately.** Distinguish smoke tests from full training, cached results from new computations, and CSV validity from OCR quality. Claim Colab compatibility only after implementing and testing it.
