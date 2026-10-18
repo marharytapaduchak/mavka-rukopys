@@ -1,7 +1,5 @@
 """Page detection, transcription, and CSV export."""
 
-from PIL import Image
-from doclayout_yolo import YOLOv10
 from pathlib import Path
 import csv
 import json
@@ -19,6 +17,7 @@ def detect_pages(
     image_size=1024,
 ):
     """Detect document regions with YOLO and save resumable page-level results."""
+    from doclayout_yolo import YOLOv10
     config = {
         "weights_sha256": file_digest(weights),
         "pages_sha256": digest(pages),
@@ -105,6 +104,7 @@ def transcribe_pages(
     max_tokens=1024,
 ):
     """Classify and transcribe detected regions with resumable page-level output."""
+    from PIL import Image
     if len({p["image"] for p in pages}) != len(pages):
         raise ValueError("Duplicate filenames")
 

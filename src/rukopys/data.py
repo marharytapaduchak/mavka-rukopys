@@ -1,9 +1,5 @@
 """Dataset splits and resumable crop preparation."""
 
-from PIL import Image
-from PIL import ImageChops
-from huggingface_hub import dataset_info
-from huggingface_hub import hf_hub_download
 from pathlib import Path
 import json
 import math
@@ -54,6 +50,8 @@ def make_split(records, revision, seed=42, fraction=0.2):
 
 def prepare_data(root, seed=42, existing_split=None, revision=None):
     """Prepare validated crops and manifests with resumable per-page receipts."""
+    from huggingface_hub import dataset_info, hf_hub_download
+    from PIL import Image, ImageChops
     root = Path(root)
     data = root / "data"
     data.mkdir(parents=True, exist_ok=True)

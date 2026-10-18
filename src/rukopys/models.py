@@ -1,14 +1,8 @@
 """Qwen loading, conversations, and response generation."""
 
-from huggingface_hub import model_info
 from pathlib import Path
-from peft import PeftModel
-from transformers import AutoProcessor
-from transformers import BitsAndBytesConfig
-from transformers import Qwen3VLForConditionalGeneration
 import importlib.metadata
 import time
-import torch
 
 from .config import TYPES
 from .utils import atomic_json, file_digest, read_json
@@ -16,6 +10,11 @@ from .utils import atomic_json, file_digest, read_json
 
 def load_qwen(root, adapter=None, quantized=True, max_pixels=512 * 512):
     """Load Qwen, its processor, an optional adapter, and the inference protocol."""
+    import torch
+    import importlib.metadata
+    from huggingface_hub import model_info
+    from transformers import AutoProcessor, BitsAndBytesConfig, Qwen3VLForConditionalGeneration
+    from peft import PeftModel
     root = Path(root)
     project = read_json(root / "project.json")
 
@@ -125,6 +124,7 @@ def conversation(crop, prompt, answer=None):
 
 def generate(model, processor, crop, prompt, max_tokens=512):
     """Generate a deterministic response and record timing and token usage."""
+    import torch
     batch = processor.apply_chat_template(
         conversation(crop, prompt),
         tokenize=True,
