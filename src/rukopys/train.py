@@ -1,7 +1,18 @@
 """Multitask examples and resumable LoRA training."""
 
-from pathlib import Path
 import random
+from pathlib import Path
+
+import torch
+from peft import (
+    LoraConfig,
+    get_peft_model,
+    prepare_model_for_kbit_training,
+    set_peft_model_state_dict,
+)
+from PIL import Image
+from safetensors.torch import load_file
+from transformers import set_seed
 
 from .config import CLASS_PROMPT, PROMPTS
 from .models import conversation
@@ -37,8 +48,6 @@ def training_examples(rows):
 
 def supervised_batch(processor, example, device):
     """Prepare one training batch with loss restricted to assistant answer tokens."""
-    import torch
-    from PIL import Image
     with Image.open(example["crop_path"]) as im:
         crop = im.convert("RGB")
 
@@ -97,10 +106,6 @@ def train(
     max_regions=None,
 ):
     """Train a LoRA adapter with gradient accumulation and resumable checkpoints."""
-    import torch
-    from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training, set_peft_model_state_dict
-    from safetensors.torch import load_file
-    from transformers import set_seed
     if epochs < 1 or accumulation < 1 or save_every < 1:
         raise ValueError("Invalid training settings")
 

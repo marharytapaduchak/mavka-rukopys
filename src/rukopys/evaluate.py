@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+from PIL import Image
+
 from .config import CLASS_PROMPT, PROMPTS, TYPES
 from .metrics import cer_summary
 from .models import generate, parse_type
@@ -18,7 +20,6 @@ def evaluate(
     max_tokens=512,
 ):
     """Evaluate classification and oracle/routed transcription on validation crops."""
-    from PIL import Image
     rows = read_json(Path(root) / "data/validation.json")
     prompts = prompts or PROMPTS
 

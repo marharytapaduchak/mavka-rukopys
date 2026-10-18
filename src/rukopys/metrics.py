@@ -1,5 +1,6 @@
 """Edit distance and character error rate metrics."""
 
+
 def edit_distance(a, b):
     """Compute the Levenshtein distance between two sequences."""
     previous = list(range(len(b) + 1))

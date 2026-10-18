@@ -1,9 +1,9 @@
 """JSON, hashing, and bounding-box utilities."""
 
-from pathlib import Path
 import hashlib
 import json
 import math
+from pathlib import Path
 
 
 def read_json(path):
