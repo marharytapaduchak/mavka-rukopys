@@ -1,4 +1,4 @@
-# HAndwritten to data
+# Handwritten to data
 
 Predicts which of 3 grape cultivars a wine came from, using 13 chemical measurements — a small, complete, fully-reproducible example project built from [`ucu-ai-course/project-template`](https://github.com/ucu-ai-course/project-template).
 
