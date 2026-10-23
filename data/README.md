@@ -154,14 +154,14 @@ The dataset exhibits significant class imbalance, with handwritten regions domin
 
 All 25,651 bounding boxes passed coordinate and image-boundary validation.
 
-A deterministic, source-stratified train/validation split was generated:
+A deterministic, source-stratified train/validation split was reconstructed using the project's splitting logic:
 
 - **Training:** 1,062 pages
 - **Validation:** 268 pages
 - **Random seed:** 42
 - **Page overlap:** None
 
-The split preserves source-level representation, although region-type proportions may differ between partitions.
+The reconstructed split should be checked against the split used in the model training experiments.
 
 ### Key Findings and Implications
 
@@ -181,7 +181,7 @@ Several dataset characteristics may affect model performance:
 - **Historical spelling:** older documents may contain uncommon vocabulary and spelling conventions.
 - **Image quality:** some pages may contain noise, blur, or low contrast.
 - **Complex layouts:** tables, formulas, and mixed-content pages require specialized handling.
-- **Class imbalance:** region types may not be equally represented; this requires quantitative verification.
+- **Class imbalance:** The dataset is highly imbalanced, with handwritten regions accounting for 84.12% of all annotations. Rare categories such as tables (0.55%) and graphs (0.23%) may require additional attention during evaluation.
 - **Generalization:** performance may vary between document sources and handwriting styles.
 
 ## Evaluation
