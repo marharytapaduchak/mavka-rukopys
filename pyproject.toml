@@ -1,17 +1,19 @@
+
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "wine-origin"
+name = "mavka-rukopys"
 version = "0.1.0"
-description = "Wine cultivar classification example project (course template)"
+description = "Ukrainian handwritten document understanding using YOLO and Qwen3-VL"
 requires-python = ">=3.11"
 readme = "README.md"
 license = { text = "MIT" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["rukopys*"]
 
 [tool.black]
 line-length = 100
