@@ -104,21 +104,74 @@ Invalid annotations are recorded separately for inspection.
 
 Non-text regions such as images and graphs do not require transcription.
 
+
 ## Exploratory Data Analysis
 
-A dedicated EDA notebook is planned to analyze the dataset before further model optimization.
+Exploratory Data Analysis (EDA) was conducted to examine the RUKOPYS dataset, identify potential challenges, and support further model development.
 
-The analysis will include:
+The analysis is available in [`07_rukopys_eda.ipynb`](../notebooks/07_rukopys_eda.ipynb).
 
-- Total number of document pages and annotated regions.
-- Distribution of document sources.
-- Distribution of region types.
-- Number of regions per page.
-- Transcription length distribution.
-- Legibility and language distributions.
-- Comparison of training and validation partitions.
+### Dataset Overview
 
-Statistics and visualizations will be added after the analysis is completed.
+The labeled training dataset contains:
+
+| Statistic | Value |
+|---|---:|
+| Document pages | 1,330 |
+| Annotated regions | 25,651 |
+| Document sources | 4 |
+| Region categories | 7 |
+| Regions with non-empty transcription | 25,376 |
+| Median regions per page | 20 |
+| Median transcription length | 30 characters |
+
+### Document Source Distribution
+
+| Source | Pages |
+|---|---:|
+| School | 682 |
+| Dictation | 359 |
+| University | 162 |
+| Archive | 127 |
+
+School documents represent the largest proportion of the dataset (51.3%), while archival documents account for only 9.5%.
+
+### Region Type Distribution
+
+| Region Type | Count | Percentage |
+|---|---:|---:|
+| Handwritten | 21,577 | 84.12% |
+| Formula | 2,892 | 11.27% |
+| Annotation | 554 | 2.16% |
+| Printed | 308 | 1.20% |
+| Table | 142 | 0.55% |
+| Image | 119 | 0.46% |
+| Graph | 59 | 0.23% |
+
+The dataset exhibits significant class imbalance, with handwritten regions dominating the annotations. Less frequent classes, particularly tables and graphs, may be more challenging to recognize reliably.
+
+### Data Quality and Splitting
+
+All 25,651 bounding boxes passed coordinate and image-boundary validation.
+
+A deterministic, source-stratified train/validation split was generated:
+
+- **Training:** 1,062 pages
+- **Validation:** 268 pages
+- **Random seed:** 42
+- **Page overlap:** None
+
+The split preserves source-level representation, although region-type proportions may differ between partitions.
+
+### Key Findings and Implications
+
+1. **Class imbalance:** Model performance should be evaluated across individual region types, not only using overall accuracy.
+2. **Document diversity:** Different document sources and handwriting styles may affect generalization. Source-specific evaluation is recommended.
+3. **Transcription complexity:** Variation in transcription length should be considered when selecting generation parameters.
+4. **Annotation quality:** Bounding box validation did not reveal invalid coordinates.
+5. **Evaluation:** CER and Page CER are important for assessing transcription quality, alongside detection and classification metrics.
+
+These findings will guide further fine-tuning, error analysis, and evaluation of the document understanding pipeline.
 
 ## Known limitations and challenges
 
