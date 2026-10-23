@@ -9,6 +9,7 @@
 | `04_evaluate_qwen.ipynb` | Evaluate the adapter, compare it with the baseline, and review errors. |
 | `05_experiments.ipynb` | Compare transcription prompts on the same validation data. |
 | `06_detector_integration.ipynb` | Combine detection and transcription, then export a Kaggle submission using a fixed inference policy. |
+| `07_rukopys_eda.ipynb` | Explore the RUKOPYS dataset, analyze annotation distributions, validate data quality, and compare training/validation splits. |
 
 1. **Keep reusable logic in `src/rukopys/`.** Notebooks document experiments and import shared functions from the package. `src/core.py` remains a compatibility wrapper for older imports.
 
