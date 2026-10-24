@@ -1,73 +1,115 @@
-# models/
 
-`models/*.joblib` is gitignored — model weights don't belong in git. This file explains
-where they go instead, and how the code finds them either way.
+# RUKOPYS — Models and Checkpoints
 
-## Why not just commit the model file?
+This directory documents the models used in the
+MAVKA — RUKOPYS document understanding pipeline.
 
-| Threshold | What happens |
+The project combines document layout detection with
+region classification and transcription.
+
+## Model Architecture
+
+### Stage 1 — Document Region Detection
+
+**Model:** DocLayout-YOLO (YOLOv10-based)
+
+**Purpose:**
+- Detect meaningful document regions.
+- Predict bounding boxes.
+- Extract regions for subsequent processing.
+
+The detection experiments are available in:
+
+[`notebooks/00_region_detection.ipynb`](../notebooks/00_region_detection.ipynb)
+
+### Stage 2 — Region Classification and Transcription
+
+**Model:** Qwen3-VL-4B-Instruct
+
+**Purpose:**
+- Classify detected regions.
+- Transcribe handwritten and printed text.
+- Recognize annotations.
+- Represent mathematical formulas using LaTeX.
+- Extract tables in a structured text format.
+
+Images and graphs are classified without transcription.
+
+The Qwen experiments are available in:
+
+- [`02_qwen_baseline.ipynb`](../notebooks/02_qwen_baseline.ipynb)
+- [`03_train_qwen.ipynb`](../notebooks/03_train_qwen.ipynb)
+- [`04_evaluate_qwen.ipynb`](../notebooks/04_evaluate_qwen.ipynb)
+- [`05_experiments.ipynb`](../notebooks/05_experiments.ipynb)
+
+## Fine-Tuning
+
+The project uses QLoRA for parameter-efficient
+fine-tuning of Qwen3-VL.
+
+Fine-tuning aims to improve region classification
+and transcription accuracy on Ukrainian handwritten documents.
+
+Training configurations and evaluation results
+are documented in the corresponding notebooks.
+
+## Model Checkpoints
+
+Model weights and checkpoints are not stored directly
+in this GitHub repository.
+
+These artifacts may include:
+
+| Artifact | Purpose |
 |---|---|
-| > 10 MB | Not committed — this template's `.pre-commit-config.yaml` fails the `check-added-large-files` hook at 1000 KB / 10 MB |
-| > 100 MB | GitHub rejects the push outright |
-| Any size, after the fact | `git rm large_file.joblib` does **not** remove it from git history — the object stays in every clone forever unless someone rewrites history (`git filter-repo`, BFG), which is painful for a whole team to coordinate. Decide *before* the first commit, not after. |
+| YOLO checkpoint | Trained document region detector |
+| Qwen base model | Base vision-language model |
+| QLoRA adapter | Fine-tuned transcription and classification adapter |
+| Processor configuration | Model input preprocessing |
 
-This project's model (`models/model.joblib`, a scikit-learn pipeline) happens to be under a
-megabyte, so in this specific case the 10 MB rule wouldn't even bite — but the pattern
-below is what to use once a model doesn't fit that comfortably, and it costs nothing to
-use it from day one.
+Checkpoint locations depend on the experiment configuration.
 
-## How to publish a model (Hugging Face Hub)
+No public checkpoint download location is claimed
+unless explicitly documented.
 
-```python
-from huggingface_hub import HfApi
+## Evaluation
 
-HfApi().upload_file(
-    path_or_fileobj="models/model.joblib",
-    path_in_repo="model.joblib",
-    repo_id="<your-username>/wine-origin-classifier",
-    repo_type="model",
-    token=os.environ["HF_TOKEN"],  # see .env.example
-)
-```
+The project evaluates:
 
-Then set `huggingface.repo_id` in `config/default.yaml` to `"<your-username>/wine-origin-classifier"`.
+- Detection F1 and IoU.
+- Region classification accuracy.
+- Character Error Rate (CER).
+- Page-level Character Error Rate (Page CER).
+- Overall Kaggle competition score.
 
-## How the code loads it
+Baseline and fine-tuned models should be compared
+using consistent validation data and evaluation procedures.
 
-`wine_origin.models.load_model()` tries the local path first, and only falls back to
-the Hub if nothing is there locally:
+## Reproducibility
 
-```python
-def load_model(path, hf_repo_id=""):
-    if Path(path).exists():
-        return joblib.load(path)
-    if hf_repo_id:
-        from huggingface_hub import hf_hub_download
-        return joblib.load(hf_hub_download(repo_id=hf_repo_id, filename="model.joblib"))
-    raise FileNotFoundError(...)  # tells the caller to run `python -m wine_origin train`
-```
+Each experiment should record:
 
-This is what lets `python -m wine_origin predict` and the Streamlit app work on a
-clean machine that has never run `python -m wine_origin train`, as long as
-`huggingface.repo_id` is configured — no manual download step required.
+- Model identifier and version.
+- Dataset revision and validation split.
+- Training configuration and random seed.
+- Checkpoint or adapter identifier.
+- Evaluation protocol and metrics.
 
-## Model card checklist (fill in on the Hub, not just here)
+Large model artifacts should be stored separately
+from the Git repository.
 
-When you create the Hub repo, its model card (`README.md` on the Hub) should cover:
+## Future Improvements
 
-- **Task** — e.g. "3-class wine cultivar classification from 13 chemical measurements"
-- **Training data** — link back to this repo's `data/README.md`, don't restate the license there, just point to it
-- **Metrics** — pull straight from `results/metrics.json`, don't hand-type numbers that can drift out of sync
-- **Limitations** — dataset size, any known class imbalance, anything the model hasn't seen
-- **License** — usually inherits the more restrictive of your data's license and your code's license
-- **How to cite** — point back to this repo's `CITATION.cff`
+Planned experiments include:
 
-## Alternatives to Hugging Face Hub
+1. Larger-scale QLoRA fine-tuning.
+2. Hyperparameter optimization.
+3. Silver-data experiments.
+4. Postprocessing and OCR error correction.
+5. Evaluation of alternative OCR models if necessary.
 
-| Option | Good for |
-|---|---|
-| Hugging Face Hub | Models *and* datasets, free hosting, versioning, the pattern used above |
-| GitHub Releases | A one-off artifact up to ~2 GB, no need for model-specific tooling |
-| Git LFS | If you want the file to still feel like "part of the repo" via git commands |
-| DVC + cloud storage | Multiple large artifacts across a project's lifetime, with pipeline tracking |
-| Zenodo | You need a DOI (e.g. citing a specific model version in a paper) |
+## References
+
+- [Qwen3-VL-4B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct)
+- [RUKOPYS Dataset](https://huggingface.co/datasets/UkrainianCatholicUniversity/rukopys)
+- [Handwritten to Data Competition](https://www.kaggle.com/competitions/handwritten-to-data)
