@@ -118,7 +118,34 @@ For the complete dataset description, preparation procedure, and EDA results, se
 
 ## Approach
 
+### Step 1: Region Detection
 
+#### Model
+We use [DocLayout-YOLO](https://github.com/opendatalab/DocLayout-YOLO) to localize regions on each page before  text recognition. The detected regions are passed to Qwen for reading and interpretation.
+
+#### Training
+- **Initialization:** `doclayout_yolo_docstructbench_imgsz1024.pt` from the Hugging Face repo
+  [`juliozhao/DocLayout-YOLO-DocStructBench`](https://huggingface.co/juliozhao/DocLayout-YOLO-DocStructBench).
+- **Fine-tuning:** trained on the challenge dataset for 50 epochs at image size 1024, with batch size of 2 and AdamW as optimizer.
+- **Split:** the list of page filenames was shuffled randomly (seed = 42) and the first 80% were used for training (1064 images) and the remaining 20% for validation (266 images). The split is at page level, so pages from the same writer, document or archival fund may appear in both sets.
+
+Fine-tuning adapts the model from its pretrained domain which is mostly printed documents to the layout and handwriting conventions of RYKOPUS dataset.
+
+#### Results
+Evaluated on the held-out validation set (a predicted box counts as correct at IoU ≥ 0.5):
+
+| Metric | Value |
+|---|---|
+| F1 | 0.889 |
+| Precision | 0.890 |
+| Recall | 0.888 |
+| Confidence threshold | 0.35 |
+
+The confidence threshold of 0.35 was chosen by sweeping the threshold and selecting the value that maximizes F1. Precision and recall are almost perfectly balanced at this point, so the detector neither over-predicts nor misses regions systematically.
+
+#### Limitations
+- Around 11% of regions are still missed or mislocalized.
+- Errors at this stage propagate downstream since Qwen can't work with missed or partially covered region.
 
 ## Results
 
@@ -177,3 +204,9 @@ Citing this project: see [`CITATION.cff`](CITATION.cff) (GitHub renders a "Cite 
 ## Acknowledgments
 
 Built from [`ucu-ai-course/project-template`](https://github.com/ucu-ai-course/project-template). Thanks to the course instructors and our project mentor for feedback throughout the semester.
+
+- Region detection builds on [DocLayout-YOLO](https://github.com/opendatalab/DocLayout-YOLO)
+  (Zhao et al., 2024, arXiv:2410.12628). We use the publicly released DocStructBench
+  checkpoint as initialization.
+
+- DocLayout-YOLO is built on YOLOv10 and the Ultralytics codebase.
