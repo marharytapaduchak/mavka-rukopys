@@ -1,5 +1,4 @@
-
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Download RUKOPYS training metadata from Hugging Face."""
 
 import argparse
@@ -15,7 +14,6 @@ DEFAULT_OUTPUT = Path("data/raw/metadata.jsonl")
 
 
 def download_metadata(output_path, revision=None):
-    """Download metadata without downloading document images."""
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
