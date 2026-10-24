@@ -1,21 +1,34 @@
-# Recording a demo GIF for README.md
 
-The root README has a spot for a demo GIF/screenshot of the Streamlit app, right after
-the title. A short recording is worth more than a paragraph of description — a reader
-can tell what your project does in about five seconds instead of reading through the
-whole README first.
+# RUKOPYS — Demo and Results Visualization
 
-## Quick option: a static screenshot
+This document describes how to prepare visual demonstrations
+of the MAVKA — RUKOPYS pipeline.
 
-Run `streamlit run app/streamlit_app.py`, open it in a browser, take a screenshot, save it as
-`results/demo/demo.png`, and reference it from the README:
+## Current Demonstration
 
-```markdown
-![Demo](results/demo/demo.png)
-```
+The project currently uses Jupyter notebooks to demonstrate:
 
-Good enough for most submissions, and much less effort than a recording.
+- Document region detection with DocLayout-YOLO.
+- Region classification and transcription with Qwen3-VL.
+- Model evaluation and error analysis.
+- End-to-end inference and Kaggle submission generation.
 
-## A recorded GIF
+See the [`notebooks/`](../notebooks/) directory.
 
-You can use some tool to record your demo as GIF and put into readme.
+## Recommended Visualizations
+
+For presentations and project documentation, useful examples include:
+
+1. Original document image.
+2. Detected bounding boxes with region types.
+3. Transcribed text for selected regions.
+4. Comparison between predicted and reference transcription.
+5. Evaluation metrics and representative errors.
+
+## Future Demo
+
+An interactive application may be developed to allow users
+to upload documents and inspect predictions directly.
+
+Any screenshots or demonstrations should be generated from
+actual model outputs and clearly labeled.
