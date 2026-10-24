@@ -14,6 +14,7 @@ DEFAULT_OUTPUT = Path("data/raw/metadata.jsonl")
 
 
 def download_metadata(output_path, revision=None):
+    """Download metadata without downloading document images."""
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -43,9 +44,7 @@ def download_metadata(output_path, revision=None):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Download RUKOPYS training metadata."
-    )
+    parser = argparse.ArgumentParser(description="Download RUKOPYS training metadata.")
 
     parser.add_argument(
         "--output",
@@ -63,10 +62,7 @@ def main():
 
     args = parser.parse_args()
 
-    download_metadata(
-        output_path=args.output,
-        revision=args.revision,
-    )
+    download_metadata(output_path=args.output, revision=args.revision)
 
 
 if __name__ == "__main__":
