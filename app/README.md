@@ -1,35 +1,29 @@
-# app/
 
-## What Streamlit is
+# RUKOPYS — Demo Application
 
-[Streamlit](https://streamlit.io/) turns a plain Python script into an interactive web
-app — no HTML/JS/frontend framework needed. You write normal Python, call functions
-like `st.number_input(...)` or `st.button(...)` to render widgets, and Streamlit
-reruns your script top-to-bottom whenever the user interacts with something. That's
-the whole model: it's why `streamlit_app.py` reads like a script, not a web server.
+This directory is reserved for a future interactive demonstration
+of the MAVKA — RUKOPYS document understanding pipeline.
 
-This project uses it for one reason: a working demo you can click through is a much
-faster way to convince someone the model works than asking them to read code or run
-CLI commands.
+## Current Status
 
-## How to run it
+An interactive application has not yet been implemented.
 
-```bash
-source .venv/bin/activate   # if you haven't already (created by `make setup`)
-python -m wine_origin train # only needed once, if models/model.joblib doesn't exist yet
-streamlit run app/streamlit_app.py
-```
+The current pipeline is developed and evaluated through
+the notebooks in [`notebooks/`](../notebooks/).
 
-Opens at `http://localhost:8501`. Stop it with `Ctrl+C`.
+## Planned Functionality
 
-## What's in `streamlit_app.py`
+A future demo may allow users to:
 
-- 13 number inputs, one per chemical measurement, defaulting to the dataset's rough
-  averages
-- a "fill with a random test-set sample" button, so you can try the model on real
-  held-out data with one click instead of typing 13 numbers by hand
-- the prediction plus a bar chart of class probabilities
-- `@st.cache_resource` on model loading, so the (small) model is loaded once per
-  session instead of on every interaction — this matters more as models get bigger
-- a friendly `st.error(...)` message (not a stack trace) if no trained model is found,
-  telling you to run `python -m wine_origin train` first
+1. Upload an image of a handwritten Ukrainian document.
+2. Detect document regions using DocLayout-YOLO.
+3. Classify and transcribe regions using Qwen3-VL.
+4. Visualize detected bounding boxes.
+5. View and export structured transcription results.
+
+## Implementation
+
+The reusable inference logic is available in
+[`src/rukopys/inference.py`](../src/rukopys/inference.py).
+
+The application framework and interface have not been selected yet.
