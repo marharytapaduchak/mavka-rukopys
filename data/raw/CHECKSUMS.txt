@@ -1,3 +1,12 @@
-# sha256 checksums for files in data/raw/, so reproducibility can be checked
-# without the data itself being committed. Regenerate by rerunning this script.
-cd80158fad3d1e203d61dae42242620b02dd5f918e637b5f08381e39e7cf5204  wine.csv
+
+# MAVKA — RUKOPYS dataset checksums
+#
+# No local raw dataset checksums are recorded yet.
+#
+# Dataset source:
+# https://huggingface.co/datasets/UkrainianCatholicUniversity/rukopys
+#
+# The data preparation pipeline records the Hugging Face dataset
+# revision and metadata hash for reproducibility.
+#
+# Do not add checksums without generating them from actual files.
