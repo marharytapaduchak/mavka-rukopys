@@ -1,15 +1,26 @@
+
 {
-  "alcohol": 14.23,
-  "malic_acid": 1.71,
-  "ash": 2.43,
-  "alcalinity_of_ash": 15.6,
-  "magnesium": 127.0,
-  "total_phenols": 2.8,
-  "flavanoids": 3.06,
-  "nonflavanoid_phenols": 0.28,
-  "proanthocyanins": 2.29,
-  "color_intensity": 5.64,
-  "hue": 1.04,
-  "od280/od315_of_diluted_wines": 3.92,
-  "proline": 1065.0
+  "image": "example_page.png",
+  "regions": [
+    {
+      "bbox": [100, 150, 850, 210],
+      "type": "handwritten",
+      "text": "Сьогодні гарний день."
+    },
+    {
+      "bbox": [100, 240, 700, 300],
+      "type": "printed",
+      "text": "Завдання 1"
+    },
+    {
+      "bbox": [120, 340, 600, 410],
+      "type": "formula",
+      "text": "x^2 + y^2 = z^2"
+    },
+    {
+      "bbox": [100, 450, 850, 700],
+      "type": "image",
+      "text": ""
+    }
+  ]
 }
