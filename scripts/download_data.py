@@ -1,74 +1,74 @@
-#!/usr/bin/env python
-"""Materialize the wine dataset to data/raw/wine.csv and record its checksum.
 
-Idempotent: if the CSV already exists and its sha256 matches what's on record in
-data/raw/CHECKSUMS.txt, nothing is re-downloaded or re-written. That file IS committed
-to git (unlike the data itself) — it's how reproducibility gets checked without the
-raw data ever being in version control: anyone can regenerate the CSV and confirm the
-checksum matches.
-"""
-
-from __future__ import annotations
+#!/usr/bin/env python3
+"""Download RUKOPYS training metadata from Hugging Face."""
 
 import argparse
 import hashlib
-import logging
 from pathlib import Path
 
-from wine_origin.data import materialize_raw_csv
+from huggingface_hub import hf_hub_download
 
-logger = logging.getLogger(__name__)
+DATASET_ID = "UkrainianCatholicUniversity/rukopys"
+METADATA_FILE = "train/metadata.jsonl"
 
-RAW_CSV = Path("data/raw/wine.csv")
-CHECKSUMS_FILE = Path("data/raw/CHECKSUMS.txt")
-
-
-def sha256_of(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+DEFAULT_OUTPUT = Path("data/raw/metadata.jsonl")
 
 
-def read_recorded_checksum(checksums_file: Path, filename: str) -> str | None:
-    if not checksums_file.exists():
-        return None
-    for line in checksums_file.read_text().splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        digest, recorded_name = line.split(maxsplit=1)
-        if recorded_name == filename:
-            return digest
-    return None
+def download_metadata(output_path, revision=None):
+    """Download metadata without downloading document images."""
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
+    if output_path.exists():
+        print(f"Metadata already exists: {output_path}")
+        return output_path
 
-def write_checksum(checksums_file: Path, filename: str, digest: str) -> None:
-    checksums_file.parent.mkdir(parents=True, exist_ok=True)
-    checksums_file.write_text(
-        "# sha256 checksums for files in data/raw/, so reproducibility can be checked\n"
-        "# without the data itself being committed. Regenerate by rerunning this "
-        "script.\n"
-        f"{digest}  {filename}\n"
+    print(f"Downloading metadata from {DATASET_ID}")
+
+    cached_path = hf_hub_download(
+        repo_id=DATASET_ID,
+        filename=METADATA_FILE,
+        repo_type="dataset",
+        revision=revision,
     )
 
+    data = Path(cached_path).read_bytes()
+    output_path.write_bytes(data)
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
+    checksum = hashlib.sha256(data).hexdigest()
+
+    print(f"Saved metadata to: {output_path}")
+    print(f"SHA256: {checksum}")
+    print(f"Size: {len(data) / (1024 * 1024):.2f} MB")
+
+    return output_path
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Download RUKOPYS training metadata."
+    )
+
     parser.add_argument(
-        "--force", action="store_true", help="Re-materialize even if checksums already match"
+        "--output",
+        type=Path,
+        default=DEFAULT_OUTPUT,
+        help="Local metadata destination.",
     )
+
+    parser.add_argument(
+        "--revision",
+        type=str,
+        default=None,
+        help="Optional Hugging Face dataset revision.",
+    )
+
     args = parser.parse_args()
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
 
-    recorded = read_recorded_checksum(CHECKSUMS_FILE, RAW_CSV.name)
-    if not args.force and RAW_CSV.exists() and recorded is not None:
-        if sha256_of(RAW_CSV) == recorded:
-            logger.info("%s already up to date (sha256 matches CHECKSUMS.txt), skipping", RAW_CSV)
-            return
-        logger.warning("%s exists but checksum doesn't match — re-materializing", RAW_CSV)
-
-    materialize_raw_csv(RAW_CSV)
-    digest = sha256_of(RAW_CSV)
-    write_checksum(CHECKSUMS_FILE, RAW_CSV.name, digest)
-    logger.info("Wrote %s (sha256 %s)", RAW_CSV, digest)
+    download_metadata(
+        output_path=args.output,
+        revision=args.revision,
+    )
 
 
 if __name__ == "__main__":
