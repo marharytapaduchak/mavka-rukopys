@@ -16,7 +16,7 @@ Predicts which of 3 grape cultivars a wine came from, using 13 chemical measurem
 
 | Name | GitHub | Role |
 |---|---|---|
-| Daryna Shevchuk | [@dasha-pn](https://github.com/dasha-pn) | - |
+| Daryna Shevchuk | [@dasha-pn](https://github.com/dasha-pn) | Stage 2: Qwen classification and transcription, QLoRA fine-tuning, and detector integration |
 | Marharyta Paduchak | [@marharytapaduchak](https://github.com/marharytapaduchak) | - |
 | Viktoriya Kibyeryeva | [@vi-kibereva](https://github.com/vi-kibereva) | - |
 
@@ -147,14 +147,201 @@ The confidence threshold of 0.35 was chosen by sweeping the threshold and select
 - Around 11% of regions are still missed or mislocalized.
 - Errors at this stage propagate downstream since Qwen can't work with missed or partially covered region.
 
+### Step 2: Region Classification and Transcription
+
+#### Model and motivation
+
+We use [Qwen3-VL-4B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct)
+to classify and transcribe crops extracted from document regions.
+
+Our research question is whether a single vision-language model can be adapted
+to the different content types in Ukrainian documents. We use the same model
+with task-specific prompts rather than separate recognizers for text, formulas,
+and tables.
+
+This choice does not imply that Qwen outperforms specialized OCR models.
+We plan a controlled comparison on handwritten, printed, and annotation regions.
+If a specialized recognizer performs better, we will integrate it into Stage 2
+while retaining Qwen for classification, formulas, and tables.
+
+#### Inference pipeline
+
+Each detected region is processed in two steps:
+
+1. **Classification:** Qwen predicts one of seven labels:
+   `handwritten`, `printed`, `annotation`, `formula`, `table`, `image`, or `graph`.
+2. **Type-specific transcription:** the predicted label determines the prompt
+   used for the next model call.
+
+| Region type | Requested output |
+|---|---|
+| Handwritten, printed, annotation | Text in reading order, preserving original spelling, punctuation, and incomplete words |
+| Formula | LaTeX preserving mathematical symbols and structure |
+| Table | Cell contents separated by `|`, with rows separated by newlines |
+| Image, graph | No transcription; bounding box and predicted type are retained with empty text |
+
+Text prompts explicitly instruct the model not to correct, translate, explain,
+or complete the source text. These instructions define the intended behavior;
+their reliability is assessed through evaluation.
+
+Each output region contains its bounding box, predicted type, and transcription.
+The integrated pipeline exports page-level predictions in the competition's
+submission format.
+
+#### Baseline
+
+Our Stage 2 baseline is Qwen3-VL-4B-Instruct without a project-trained adapter,
+loaded with 4-bit quantization.
+
+This is our local experimental baseline. It should not be interpreted as a
+reproduction of the competition baseline score cited in the proposal.
+
+#### QLoRA pilot training
+
+We implemented supervised multitask fine-tuning using QLoRA to reduce training
+memory requirements on a local NVIDIA GTX 1080 Ti with 11 GB VRAM.
+
+The base model is loaded with 4-bit NF4 quantization and remains frozen.
+LoRA adapters are trained in the language model's attention projections:
+`q_proj`, `k_proj`, `v_proj`, and `o_proj`. The visual encoder is not fine-tuned.
+
+Each training region contributes one classification example. Regions eligible
+for transcription additionally contribute a transcription example with the
+reference text as the target.
+
+Training uses token-level cross-entropy loss restricted to assistant-answer
+tokens. Image and instruction tokens are excluded from the loss.
+
+| Setting | Pilot value |
+|---|---:|
+| Training regions | 64 |
+| Training examples | 123 |
+| Epochs | 1 |
+| Optimizer updates | 31 |
+| Base quantization | 4-bit NF4 |
+| LoRA rank | 8 |
+| LoRA alpha | 16 |
+| LoRA dropout | 0.05 |
+| Optimizer | AdamW |
+| Learning rate | 0.0001 |
+| Weight decay | 0 |
+| Micro-batch size | 1 |
+| Gradient accumulation | 4 |
+| Gradient clipping norm | 1.0 |
+
+These settings describe a smoke test of the training pipeline, not a completed
+hyperparameter search or full-dataset fine-tuning experiment.
+
+#### Validation
+
+Stage 2 uses a deterministic, source-stratified, page-disjoint holdout split:
+
+- **Training:** 1,062 pages and 20,569 regions.
+- **Validation:** 268 pages and 5,082 regions.
+
+Of the validation regions, 4,955 meet the pipeline's transcription-scoring
+criteria. We use one fixed split; k-fold cross-validation has not been performed.
+
+Evaluation uses ground-truth bounding boxes to isolate Stage 2 from detection
+errors. We distinguish two transcription settings:
+
+- **Oracle type:** the reference region type selects the transcription prompt.
+- **Routed:** Qwen's predicted type selects the transcription prompt.
+
+We report classification accuracy and corpus raw character error rate (CER).
+These local CER values do not implement the competition's complete normalization,
+region-matching, and PageCER protocol and are not directly comparable to its
+composite score.
+
+#### Pilot results
+
+| Validation metric | Base Qwen | Qwen + pilot QLoRA |
+|---|---:|---:|
+| Classification accuracy ↑ | 91.91% | 93.35% |
+| Routed corpus raw CER ↓ | 74.55% | 86.84% |
+| Handwritten oracle corpus raw CER ↓ | 70.72% | 86.44% |
+| Formula oracle corpus raw CER ↓ | 115.47% | 64.51% |
+
+The pilot adapter improved classification and formula transcription but
+worsened overall and handwritten transcription. Observed failures included
+repetitions and text unrelated to the crop.
+
+We associate the degradation with the small training sample and initial
+hyperparameter choices; controlled follow-up experiments are needed to isolate
+their effects. The base model was selected for the current integrated inference
+run because it achieved lower routed validation CER.
+
+#### Detector integration and submission
+
+The integration notebook combines the trained DocLayout-YOLO detector with the
+validation-selected Qwen configuration.
+
+Model selection, prompts, generation budget, detector settings, and failure
+handling are recorded before transcription. Compatible saved predictions are
+reused, and interrupted inference resumes from completed pages.
+
+The current submission run uses:
+
+- The supplied detector weights, `best.pt`.
+- Base Qwen3-VL-4B-Instruct without the pilot adapter.
+- Detector confidence threshold **0.25** and image size **1024**.
+- A maximum of **512 generated tokens** per call.
+- A fixed abstention rule: transcription responses reaching the token limit
+  are exported as empty text while retaining the bounding box and predicted type.
+- An invalid classification stops the run rather than receiving a guessed label.
+
+The completed run covers **385 test pages** and contains **218 token-limit
+abstentions**. Its uploaded submission received a Kaggle score of **0.57763**.
+
+This score belongs to the complete detector-to-Qwen pipeline, not to the
+QLoRA adapter or Stage 2 alone.
+
+#### Limitations and next steps
+
+- The current adapter was trained on only 64 regions.
+- Hyperparameter tuning and larger-scale training remain unfinished.
+- The detector and Stage 2 use different training/validation splits; a common
+  held-out split is needed for integrated local evaluation.
+- Test predictions were inspected during earlier debugging. The revised frozen
+  workflow prevents further per-image tuning but does not restore test
+  independence.
+- The empty-text abstention rule was inherited from debugging and has not yet
+  been independently validated as a quality improvement.
+- Page-disjoint splitting does not guarantee writer or source-text independence.
+
+Next steps are to verify training examples, scale up QLoRA training, compare
+configurations on validation, complete competition-compatible local evaluation,
+and compare Qwen with a specialized text recognizer.
+
+#### Notebooks
+
+- [Data preparation](notebooks/01_prepare_data.ipynb)
+- [Qwen baseline](notebooks/02_qwen_baseline.ipynb)
+- [QLoRA training](notebooks/03_train_qwen.ipynb)
+- [Validation and error analysis](notebooks/04_evaluate_qwen.ipynb)
+- [Prompt experiments](notebooks/05_experiments.ipynb)
+- [Detector integration and submission](notebooks/06_detector_integration.ipynb)
+
+Reusable implementation code is maintained in `src/rukopys/`.
+
 ## Results
 
+The current integrated pipeline uses the trained DocLayout-YOLO detector and
+base Qwen3-VL-4B-Instruct, selected over the pilot adapter using validation CER.
 
+| Result | Value |
+|---|---:|
+| Integrated Kaggle submission score | 0.57763 |
+| Test pages processed | 385 |
+| Token-limit responses exported as empty text | 218 |
+
+The QLoRA pilot improved classification but worsened overall transcription.
+Detailed Stage 2 validation results and evaluation limitations are reported above.
 
 ## Quick start
 
 ```bash
-git clone <repo-url> && cd wine-origin-classifier
+git clone [<repo-url>](https://github.com/marharytapaduchak/mavka-rukopys) && cd mavka-rukopys
 make setup                          # creates .venv, installs deps, installs pre-commit hooks
 make reproduce                      # data -> train -> evaluate; should print accuracy=0.9722 macro_f1=0.9710
 source .venv/bin/activate           # everything past this point assumes the venv is active
@@ -181,7 +368,7 @@ streamlit run app/streamlit_app.py  # opens the demo at localhost:8501
 
 | Member | Contribution | Responsible for |
 |---|---|---|
-| Daryna Shevchuk | 33.3% | - |
+| Daryna Shevchuk | 33.3% | Stage 2 implementation: Qwen classification and transcription, task-specific prompts, QLoRA training pipeline and pilot, baseline/adapter evaluation, prompt experiments, and detector-to-submission integration |
 | Marharyta Paduchak | 33.3% | - |
 | Viktoriya Kibyeryeva | 33.3% | - |
 
