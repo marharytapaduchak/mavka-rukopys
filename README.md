@@ -177,7 +177,7 @@ Each detected region is processed in two steps:
 |---|---|
 | Handwritten, printed, annotation | Text in reading order, preserving original spelling, punctuation, and incomplete words |
 | Formula | LaTeX preserving mathematical symbols and structure |
-| Table | Cell contents separated by `|`, with rows separated by newlines |
+| Table | Cell contents separated by |, with rows separated by newlines |
 | Image, graph | No transcription; bounding box and predicted type are retained with empty text |
 
 Text prompts explicitly instruct the model not to correct, translate, explain,
