@@ -369,8 +369,8 @@ streamlit run app/streamlit_app.py  # opens the demo at localhost:8501
 | Member | Contribution | Responsible for |
 |---|---|---|
 | Daryna Shevchuk | 33.3% | Stage 2 implementation: Qwen classification and transcription, task-specific prompts, QLoRA training pipeline and pilot, baseline/adapter evaluation, prompt experiments, and detector-to-submission integration |
-| Marharyta Paduchak | 33.3% | - |
-| Viktoriya Kibyeryeva | 33.3% | - |
+| Marharyta Paduchak | 33.3% |  |
+| Viktoriya Kibyeryeva | 33.3% | Stage 1: bounding box detection |
 
 All members agree with the above distribution.
 
