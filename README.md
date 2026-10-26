@@ -17,8 +17,8 @@ Predicts which of 3 grape cultivars a wine came from, using 13 chemical measurem
 | Name | GitHub | Role |
 |---|---|---|
 | Daryna Shevchuk | [@dasha-pn](https://github.com/dasha-pn) | Stage 2: Qwen classification and transcription, QLoRA fine-tuning, and detector integration |
-| Marharyta Paduchak | [@marharytapaduchak](https://github.com/marharytapaduchak) | - |
-| Viktoriya Kibyeryeva | [@vi-kibereva](https://github.com/vi-kibereva) | - |
+| Marharyta Paduchak | [@marharytapaduchak](https://github.com/marharytapaduchak) | Data Preprocessing, Exploratory Data Analysis (EDA) & Evaluation |
+| Viktoriya Kibyeryeva | [@vi-kibereva](https://github.com/vi-kibereva) | Stage 1: bounding box detection |
 
 
 ## Problem and motivation
@@ -369,7 +369,7 @@ streamlit run app/streamlit_app.py  # opens the demo at localhost:8501
 | Member | Contribution | Responsible for |
 |---|---|---|
 | Daryna Shevchuk | 33.3% | Stage 2 implementation: Qwen classification and transcription, task-specific prompts, QLoRA training pipeline and pilot, baseline/adapter evaluation, prompt experiments, and detector-to-submission integration |
-| Marharyta Paduchak | 33.3% |  |
+| Marharyta Paduchak | 33.3% | Data Preprocessing, Exploratory Data Analysis (EDA) & Evaluation |
 | Viktoriya Kibyeryeva | 33.3% | Stage 1: bounding box detection |
 
 All members agree with the above distribution.
